@@ -1,9 +1,18 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   base: './',
   server: { host: '127.0.0.1' },
+  build: {
+    rolldownOptions: {
+      input: [
+        fileURLToPath(new URL('./index.html', import.meta.url)),
+        fileURLToPath(new URL('./about/index.html', import.meta.url)),
+      ],
+    },
+  },
   plugins: [
     {
       name: 'publication-notices',

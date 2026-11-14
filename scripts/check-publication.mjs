@@ -7,7 +7,7 @@ const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const site = new URL('https://skrepkus.ayku.ru/');
 asset('404.html');
 asset('_headers');
-const pages = ['index'];
+const pages = ['', 'about/'];
 
 function asset(path) {
   const full = resolve(root, path);
@@ -25,8 +25,8 @@ function meta(html, property) {
 }
 
 for (const page of pages) {
-  const html = readFileSync(asset(`${page}.html`), 'utf8');
-  const pageUrl = new URL(page === 'index' ? '' : `${page}.html`, site).href;
+  const html = readFileSync(asset(`${page}index.html`), 'utf8');
+  const pageUrl = new URL(page, site).href;
   assert.equal(meta(html, 'og:url'), pageUrl);
   assert(html.includes(`<link rel="canonical" href="${pageUrl}"`), `Wrong canonical URL: ${page}`);
   assert(meta(html, 'description'), `Missing description: ${page}`);
@@ -47,9 +47,10 @@ for (const page of pages) {
   for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
     const url = new URL(reference, pageUrl);
     if (url.origin !== site.origin) continue;
-    asset(decodeURIComponent(url.pathname).replace(/^\//, '') || 'index.html');
+    const path = decodeURIComponent(url.pathname).replace(/^\//, '');
+    asset(url.pathname.endsWith('/') ? `${path}index.html` : path);
   }
-  console.log(`${page}.html: metadata, preview image and local links OK`);
+  console.log(`${page}index.html: metadata, preview image and local links OK`);
 }
 
 for (const file of ['project-mit.txt', 'third-party-notices.txt', 'ibm-plex-mono.txt']) {
@@ -57,7 +58,7 @@ for (const file of ['project-mit.txt', 'third-party-notices.txt', 'ibm-plex-mono
 }
 const sitemap = readFileSync(asset('sitemap.xml'), 'utf8');
 for (const page of pages) {
-  assert(sitemap.includes(`<loc>${new URL(page === 'index' ? '' : `${page}.html`, site).href}</loc>`));
+  assert(sitemap.includes(`<loc>${new URL(page, site).href}</loc>`));
 }
 assert(readFileSync(asset('robots.txt'), 'utf8').includes(`Sitemap: ${new URL('sitemap.xml', site).href}`));
 console.log('Sitemap, robots.txt and license notices OK');
