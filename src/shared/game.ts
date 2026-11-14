@@ -1,6 +1,6 @@
 import { toast } from './dom';
 import { initTheme } from './theme';
-import { SaveSlot } from './storage';
+import { SaveResult, SaveSlot } from './storage';
 
 /** Хуки, общие для интерфейса всех игр. */
 export interface GameHooks<S> {
@@ -16,7 +16,7 @@ export interface GameHooks<S> {
 export interface GameOptions<S> {
   slot: SaveSlot<S>;
   /** Новая игра с постоянными бонусами финала. */
-  fresh: () => S;
+  fresh: (previous?: S) => S;
   step: (s: S) => void;
   /** Длительность тика симуляции, с. */
   tick: number;
@@ -25,11 +25,9 @@ export interface GameOptions<S> {
   /** Сколько тиков догонять за один кадр, чтобы долгий догон не подвешивал открытую вкладку. */
   maxSteps: number;
   resetQuestion?: string;
-  /** Состояние просит перезапуска (финал «Скрепкуса») — симуляция останавливается и вызывается `onRestart`. */
+  /** Состояние просит перезапуска (финал «Скрепкуса»). */
   wantsRestart?: (s: S) => boolean;
-  onRestart?: (s: S) => void;
-  /** Восстанавливает данные, которые игра хранит отдельно от основного состояния. */
-  onImport?: (s: S) => void;
+  restart?: (s: S) => S;
   ui: {
     init: (hooks: GameHooks<S>, game: Game<S>) => void;
     invalidate: () => void;
@@ -39,9 +37,9 @@ export interface GameOptions<S> {
 
 export interface Game<S> {
   readonly state: S;
-  replaceState: (state: S) => void;
-  /** Удаляет сохранение и начинает новую игру с бонусами финала. */
-  newGame: () => void;
+  replaceState: (state: S) => Promise<void>;
+  /** Начинает новую игру с бонусами финала. */
+  newGame: () => Promise<void>;
 }
 
 /** Точка входа игры: загрузка, кнопки сохранения, игровой цикл и автосохранение. */
@@ -49,19 +47,41 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
   initTheme();
 
   let state = o.slot.load() ?? o.fresh();
+  let previousSaveResult: SaveResult = 'saved';
+  let replacing = false;
 
-  function replaceState(next: S): void {
-    state = next;
-    o.ui.invalidate();
-    o.slot.save(state);
-    o.ui.render();
+  async function save(next = state, manual = false, reset = false, replacingState = false): Promise<SaveResult> {
+    const result = await o.slot.save(next, reset);
+    if (result === 'saved') {
+      if (manual) toast('Игра сохранена');
+    } else if (manual || replacingState || result !== previousSaveResult) {
+      toast(
+        result === 'conflict'
+          ? 'Сохранение изменилось в другой вкладке. Экспортируйте прогресс или перезагрузите страницу.'
+          : 'Не удалось сохранить игру в браузере. Экспортируйте прогресс, чтобы не потерять его.',
+      );
+    }
+    previousSaveResult = result;
+    return result;
   }
 
-  function importCode(code: string): void {
-    const imported = o.slot.import(code);
-    o.onImport?.(imported);
-    replaceState(imported);
-    toast('Сохранение импортировано');
+  async function replaceState(next: S, reset = false, imported = false): Promise<void> {
+    if (replacing) return;
+    replacing = true;
+    try {
+      const result = await save(next, false, reset, true);
+      if (result !== 'saved') return;
+      state = next;
+      o.ui.invalidate();
+      o.ui.render();
+      if (imported) toast('Сохранение импортировано');
+    } finally {
+      replacing = false;
+    }
+  }
+
+  function importCode(code: string): Promise<void> {
+    return replaceState(o.slot.import(code), false, true);
   }
 
   const game: Game<S> = {
@@ -70,8 +90,7 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
       return state;
     },
     newGame() {
-      o.slot.clear();
-      replaceState(o.fresh());
+      return replaceState(o.fresh(state), true);
     },
   };
 
@@ -79,8 +98,9 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
     {
       getState: () => state,
       onSave: () => {
-        o.slot.save(state);
-        toast('Игра сохранена');
+        if (replacing) return;
+        if (o.wantsRestart?.(state)) void restart();
+        else void save(state, true);
       },
       onExport: async () => {
         const code = o.slot.export(state);
@@ -91,11 +111,11 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
           prompt('Скопируйте код сохранения:', code);
         }
       },
-      onImport: () => {
+      onImport: async () => {
         const code = prompt('Вставьте код сохранения:');
         if (!code) return;
         try {
-          importCode(code);
+          await importCode(code);
         } catch {
           alert('Код сохранения не распознан.');
         }
@@ -110,7 +130,7 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
       },
       onImportFile: async (file) => {
         try {
-          importCode(await file.text());
+          await importCode(await file.text());
         } catch {
           alert('Не удалось прочитать файл сохранения или его содержимое не распознано.');
         }
@@ -129,10 +149,18 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
   let last = performance.now();
   let acc = 0;
 
+  function restart(): Promise<void> {
+    return replaceState(o.restart?.(state) ?? o.fresh(state), true);
+  }
+
   function advance(): void {
     const now = performance.now();
     acc = Math.min(acc + (now - last) / 1000, 3600);
     last = now;
+    if (replacing || o.wantsRestart?.(state)) {
+      acc = 0;
+      return;
+    }
     const limit = document.hidden ? Infinity : o.maxSteps;
     let steps = 0;
     while (acc >= o.tick && steps < limit) {
@@ -140,8 +168,7 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
       acc -= o.tick;
       steps++;
       if (o.wantsRestart?.(state)) {
-        o.onRestart?.(state);
-        game.newGame();
+        void restart();
         acc = 0;
         break;
       }
@@ -155,12 +182,19 @@ export function runGame<S>(o: GameOptions<S>): Game<S> {
     if (!document.hidden) o.ui.render();
   }, o.frame);
   // Сохраняемся, когда вкладку прячут: на телефоне её потом могут выгрузить без `beforeunload`.
+  const autosave = () => {
+    if (!replacing && !o.wantsRestart?.(state)) void save();
+  };
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) o.slot.save(state);
-    else o.ui.render();
+    if (document.hidden) {
+      if (!replacing && !o.wantsRestart?.(state)) o.slot.checkpoint(state);
+      autosave();
+    } else o.ui.render();
   });
-  window.addEventListener('pagehide', () => o.slot.save(state));
-  setInterval(() => o.slot.save(state), 10_000);
+  window.addEventListener('pagehide', () => {
+    if (!replacing && !o.wantsRestart?.(state)) o.slot.checkpoint(state);
+  });
+  setInterval(autosave, 10_000);
   o.ui.render();
 
   return game;

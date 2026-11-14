@@ -16,21 +16,22 @@ const creditsTrack = (s: ReturnType<typeof newGame>): '01' | '07' | null =>
   s.endTimer6 < 500 ? null : s.creditsRestart ? '01' : '07';
 const game = runGame({
   slot: debug ? debugSlot : slot,
-  fresh: debug ? () => Object.assign(newGame(), activePrestige.load()) : freshGame,
+  fresh: (previous) => {
+    if (previous) return Object.assign(newGame(), { prestigeU: previous.prestigeU, prestigeS: previous.prestigeS });
+    return debug ? Object.assign(newGame(), activePrestige.load()) : freshGame();
+  },
   step,
   tick: TICK,
   frame: 33,
   maxSteps: 2000,
   resetQuestion: 'Начать заново? Прогресс этой вселенной будет удалён.',
-  onImport: (s) => activePrestige.save({ prestigeU: s.prestigeU, prestigeS: s.prestigeS }),
   // Проекты финала перезапускают игру: в соседней вселенной (+10% спроса) или в симуляции (+10% креативности).
   wantsRestart: (s) => !!s.restart,
-  onRestart: (s) => {
-    const p = activePrestige.load();
-    if (s.restart === 'universe') p.prestigeU++;
-    if (s.restart === 'simulation') p.prestigeS++;
-    activePrestige.save(p);
-  },
+  restart: (s) =>
+    Object.assign(newGame(), {
+      prestigeU: s.prestigeU + Number(s.restart === 'universe'),
+      prestigeS: s.prestigeS + Number(s.restart === 'simulation'),
+    }),
   ui: {
     init: initUI,
     invalidate,

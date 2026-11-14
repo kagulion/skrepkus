@@ -178,9 +178,10 @@ export const slot: typeof main = {
     const legacy = loadLegacy();
     return legacy && withPrestige(legacy);
   },
-  clear() {
-    main.clear();
-    remove(...Object.values(LEGACY).filter((key) => key !== LEGACY.prestige));
+  async save(s, reset) {
+    const result = await main.save(s);
+    if (result === 'saved' && reset) remove(...Object.values(LEGACY).filter((key) => key !== LEGACY.prestige));
+    return result;
   },
 };
 

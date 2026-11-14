@@ -1,7 +1,6 @@
 import { Game } from '../shared/game';
 import { ClipsState, displayMessage, newGame } from './state';
 import { PROJECTS, manageProjects } from './projects';
-import { debugPrestige } from './save';
 
 function complete(s: ClipsState, ids: string[]): void {
   for (const id of ids) {
@@ -212,8 +211,7 @@ export function initDebug(game: Game<ClipsState>): void {
     if (!checkpoint) return;
     const state = checkpoint.create();
     manageProjects(state);
-    debugPrestige.save({ prestigeU: state.prestigeU, prestigeS: state.prestigeS });
-    game.replaceState(state);
+    void game.replaceState(state);
   });
   const note = document.createElement('p');
   note.textContent = 'Обычный прогресс хранится отдельно. Для выхода уберите ?debug=1 из адреса.';
