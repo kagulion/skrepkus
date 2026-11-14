@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>«Скрепкус»</title>
+  <meta name="description" content="Инкрементальная игра «Скрепкус» по мотивам Universal Paperclips Фрэнка Лантца" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:title" content="«Скрепкус»" />
+  <meta property="og:description" content="Инкрементальная игра «Скрепкус» по мотивам Universal Paperclips Фрэнка Лантца" />
+  <meta property="og:url" content="https://skrepkus.ayku.ru/" />
+  <meta property="og:site_name" content="Скрепкус" />
+  <meta property="og:image" content="https://skrepkus.ayku.ru/social/paperclips.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Скрепкус — инкрементальная игра по мотивам Universal Paperclips Фрэнка Лантца" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://skrepkus.ayku.ru/social/paperclips.png" />
+  <meta name="twitter:image:alt" content="Скрепкус — инкрементальная игра по мотивам Universal Paperclips Фрэнка Лантца" />
+  <link rel="canonical" href="https://skrepkus.ayku.ru/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <noscript><p class="noscript">Для игры нужен JavaScript.</p></noscript>
+
+  <div id="hypnoDroneEventDiv" hidden>
+    <p class="hypnoDrone" id="hypnoDroneText"></p>
+  </div>
+
+  <section class="form journal">
+    <h2>Журнал</h2>
+    <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="journalHint">?
+      <span class="hintText" role="tooltip" id="journalHint">Здесь появляются последние события и сообщения о ходе игры.</span>
+    </span>
+    <p class="journal-now"><span class="prompt">›</span> <span id="readout0"></span><span class="pulsate">|</span></p>
+    <p class="journal-old" id="readout1"></p>
+    <p class="journal-old" id="readout2"></p>
+    <p class="journal-old" id="readout3"></p>
+    <p class="journal-old" id="readout4"></p>
+  </section>
+
+  <header class="masthead">
+    <div class="org">
+      <button type="button" class="link" id="btnAbout" aria-haspopup="dialog">Что здесь происходит?</button>
+      <span id="nextLink" hidden><span aria-hidden="true">·</span> <button type="button" class="link" id="btnNext" aria-haspopup="dialog">Что дальше?</button></span>
+      <span id="spaceLink" hidden><span aria-hidden="true">·</span> <button type="button" class="link" id="btnSpace" aria-haspopup="dialog">Освоение космоса</button></span>
+    </div>
+    <div class="toolTip">
+      <span id="clipCountCrunched" class="toolTipText"></span>
+      <h1>Произведено скрепок: <span id="clips">0</span></h1>
+    </div>
+    <div class="subhead" data-show="prestige">Вселенная: <b id="prestigeUcounter"></b> · Уровень симуляции: <b id="prestigeScounter"></b></div>
+    <button type="button" class="music-toggle" id="btnMusic" aria-pressed="false">Включить музыку</button>
+    <button type="button" id="btnPreviousTrack" aria-label="Предыдущая песня" title="Предыдущая песня">⏮</button>
+    <button type="button" id="btnNextTrack" aria-label="Следующая песня" title="Следующая песня">⏭</button>
+  </header>
+
+  <main class="grid">
+    <div class="col">
+      <section class="form">
+        <h2>Производство скрепок</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="productionHint">?
+          <span class="hintText" role="tooltip" id="productionHint">Нажимайте кнопку, чтобы делать скрепки вручную. Для производства нужна проволока.</span>
+        </span>
+        <button class="primary" id="btnMakePaperclip">Сделать скрепку</button>
+        <div data-show="human">
+          <p class="note">Скрепок в секунду: <b id="clipmakerRate"></b></p>
+          <div class="row">
+            <button id="btnBuyWire">Купить проволоку</button>
+            <span class="cost">на складе: <span id="wire"></span> дюймов, стоимость: <span id="wireCost"></span> ₽</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="form" data-show="creation">
+        <h2>Фабрики</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="factoryHint">
+          ?
+          <span class="hintText" role="tooltip" id="factoryHint">
+            Скрепки в этой фазе делают только фабрики: дроны лишь добывают материю и превращают её в
+            проволоку. Начните с первой фабрики, она стоит 100 миллионов скрепок, и не тратьте всё на
+            дронов. Фабрики потребляют много энергии, поэтому следом стройте солнечные фермы. «Разобрать
+            всё» возвращает потраченные скрепки.
+          </span>
+        </span>
+        <dl>
+          <div class="kv" data-show="clipsPerSec"><dt>Скрепок в секунду</dt><dd id="clipmakerRate2"></dd></div>
+          <div class="kv" data-show="toth"><dt>Скрепок в запасе</dt><dd id="unusedClipsDisplay"></dd></div>
+        </dl>
+        <p class="note" data-show="factoryUpgrade">Следующее улучшение при <span id="nextFactoryUpgrade"></span> фабриках</p>
+
+        <div class="sub" data-show="factory">
+          <div class="row">
+            <button id="btnMakeFactory">Фабрика скрепок</button>
+            <span class="level">× <span id="factoryLevelDisplay"></span></span>
+          </div>
+          <div class="toolTip3">
+            <span id="factoryRebootToolTip" class="toolTipText3"></span>
+            <button id="btnFactoryReboot">Разобрать всё</button>
+          </div>
+          <p class="note">Стоимость: <span id="factoryCostDisplay"></span> скрепок</p>
+        </div>
+
+        <p class="note" data-show="wireTrans">Проволока: <span id="transWire"></span> <span id="inchSpan"></span></p>
+        <p class="note" data-show="factorySpace">Фабрик: <span id="factoryLevelDisplaySpace"></span></p>
+      </section>
+
+      <section class="form" data-show="wireProduction">
+        <h2>Проволока</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="wireHint">
+          ?
+          <span class="hintText" role="tooltip" id="wireHint">
+            Дроны-сборщики добывают материю, дроны-проволочники превращают её в нанопроволоку, а фабрики —
+            в скрепки. Дроны покупаются за скрепки. Если сборщиков и проволочников слишком неравное
+            количество, один из этапов простаивает. «Разобрать всё» возвращает потраченные скрепки.
+          </span>
+        </span>
+        <p class="note" data-show="droneUpgrade">Следующее улучшение при <span id="nextDroneUpgrade"></span> дронах</p>
+        <dl>
+          <dt>Доступная материя</dt><dd><span id="availableMatterDisplay"></span> г</dd>
+          <div class="kv" data-show="space"><dt>Прирост, г/с</dt><dd id="mdps"></dd></div>
+          <dt>Добытая материя</dt><dd><span id="acquiredMatterDisplay"></span> г</dd>
+          <dt>Прирост, г/с</dt><dd id="maps"></dd>
+          <dt>Нанопроволока</dt><dd><span id="nanoWire"></span> дюймов</dd>
+          <dt>Прирост, дюймов/с</dt><dd id="wpps"></dd>
+        </dl>
+
+        <div class="sub" data-show="harvesters">
+          <div class="row">
+            <button data-drone="harvester" data-amount="1">Дрон-сборщик</button>
+            <span class="level">× <span id="harvesterLevelDisplay"></span></span>
+          </div>
+          <div class="row multi">
+            <button data-drone="harvester" data-amount="10">+10</button>
+            <button data-drone="harvester" data-amount="100">+100</button>
+            <button data-drone="harvester" data-amount="1000">+1 000</button>
+          </div>
+          <div class="toolTip3">
+            <span id="harvesterRebootToolTip" class="toolTipText3"></span>
+            <button id="btnHarvesterReboot">Разобрать всё</button>
+          </div>
+          <p class="note">Стоимость: <span id="harvesterCostDisplay"></span> скрепок</p>
+        </div>
+
+        <div class="sub" data-show="wireDrones">
+          <div class="row">
+            <button data-drone="wireDrone" data-amount="1">Дрон-проволочник</button>
+            <span class="level">× <span id="wireDroneLevelDisplay"></span></span>
+          </div>
+          <div class="row multi">
+            <button data-drone="wireDrone" data-amount="10">+10</button>
+            <button data-drone="wireDrone" data-amount="100">+100</button>
+            <button data-drone="wireDrone" data-amount="1000">+1 000</button>
+          </div>
+          <div class="toolTip3">
+            <span id="wireDroneRebootToolTip" class="toolTipText3"></span>
+            <button id="btnWireDroneReboot">Разобрать всё</button>
+          </div>
+          <p class="note">Стоимость: <span id="wireDroneCostDisplay"></span> скрепок</p>
+        </div>
+
+        <p class="note" data-show="space">Дронов-сборщиков: <span id="harvesterLevelSpace"></span> · Дронов-проволочников: <span id="wireDroneLevelSpace"></span></p>
+      </section>
+
+      <section class="form" data-show="spaceDiv">
+        <h2>Освоение космоса</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="spaceHint">?
+          <span class="hintText" role="tooltip" id="spaceHint">Запускайте зонды за скрепки: они осваивают Вселенную и создают потомков. Часть зондов может быть потеряна из-за помех, дрейфа или в бою.</span>
+        </span>
+        <p>Вселенная освоена на <b><span id="colonizedDisplay"></span>%</b></p>
+        <button class="primary" id="btnMakeProbe">Запустить зонд</button>
+        <p class="note">Стоимость: <span id="probeCostDisplay"></span> скрепок</p>
+        <dl>
+          <dt>Запущено</dt><dd id="probesLaunchedDisplay"></dd>
+          <dt>Потомков</dt><dd id="probesBornDisplay"></dd>
+          <div class="kv" data-show="lostHaz"><dt>Потеряно из-за помех</dt><dd>(<span id="probesLostHazardsDisplay"></span>)</dd></div>
+          <div class="kv" data-show="lostDrift"><dt>Потеряно из-за дрейфа</dt><dd>(<span id="probesLostDriftDisplay"></span>)</dd></div>
+          <div class="kv" data-show="lostCombat"><dt>Потеряно в бою</dt><dd>(<span id="probesLostCombatDisplay"></span>)</dd></div>
+          <dt>Всего зондов</dt><dd id="probesTotalDisplay"></dd>
+        </dl>
+        <dl data-show="battleFlag">
+          <dt>Дрейферов уничтожено</dt><dd id="driftersKilled"></dd>
+          <dt>Дрейферов</dt><dd id="drifterCount"></dd>
+        </dl>
+      </section>
+
+      <section class="form" data-show="human">
+        <h2>Бизнес</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="businessHint">?
+          <span class="hintText" role="tooltip" id="businessHint">Готовые скрепки продаются автоматически. Повышение цены увеличивает выручку с одной скрепки, но снижает спрос; маркетинг повышает спрос. Выручку можно тратить на проволоку и оборудование.</span>
+        </span>
+        <dl>
+          <dt>Деньги</dt><dd><span id="funds"></span> ₽</dd>
+          <div class="kv" data-show="revPerSec">
+            <dt>Выручка в секунду</dt><dd><span id="avgRev"></span> ₽</dd>
+            <dt>Продано в секунду</dt><dd><span id="avgSales"></span> скрепок</dd>
+          </div>
+          <dt>Нераспроданных скрепок</dt><dd id="unsoldClips"></dd>
+          <dt>Цена скрепки</dt><dd class="price"><button id="btnLowerPrice">−</button><span id="margin"></span> ₽<button id="btnRaisePrice">+</button></dd>
+          <dt>Общественный спрос</dt><dd><span id="demand"></span>%</dd>
+        </dl>
+        <div class="row">
+          <button id="btnExpandMarketing">Маркетинг</button>
+          <span class="cost">уровень <span id="marketingLvl"></span> · <span id="adCost"></span> ₽</span>
+        </div>
+      </section>
+
+      <section class="form" data-show="automation">
+        <h2>Автоматизация</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="automationHint">?
+          <span class="hintText" role="tooltip" id="automationHint">Покупайте станки, чтобы производить скрепки автоматически. Когда проволока заканчивается, производство останавливается. Автозакупщик, когда он доступен и включён, пополняет её запас.</span>
+        </span>
+        <div class="row" data-show="wireBuyer">
+          <button id="btnToggleWireBuyer">Автозакупщик проволоки</button>
+          <span class="cost">статус: <span id="wireBuyerStatus"></span></span>
+        </div>
+        <div data-show="autoClipper">
+          <div class="row">
+            <button id="btnMakeClipper">Автостанок</button>
+            <span class="level">× <span id="clipmakerLevel2"></span></span>
+          </div>
+          <p class="note">Стоимость: <span id="clipperCost"></span> ₽</p>
+        </div>
+        <div class="sub" data-show="megaClipper">
+          <div class="row">
+            <button id="btnMakeMegaClipper">Мегастанок</button>
+            <span class="level">× <span id="megaClipperLevel"></span></span>
+          </div>
+          <p class="note">Стоимость: <span id="megaClipperCost"></span> ₽</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="form" data-show="comp">
+        <h2>Вычислительные ресурсы</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="compHint">
+          ?
+          <span class="hintText" role="tooltip" id="compHint">
+            Процессоры ускоряют вычисления, память увеличивает запас операций. Операции тратятся на проекты, а когда запас
+            полон, начинает копиться креативность.
+          </span>
+        </span>
+        <dl>
+          <div class="kv" data-show="human"><dt>Доверие</dt><dd id="trust"></dd><dt>Следующее при</dt><dd><span id="nextTrust"></span> скрепок</dd></div>
+          <div class="kv" data-show="swarmGifts"><dt>Подарки роя</dt><dd id="swarmGifts"></dd></div>
+        </dl>
+        <div class="row">
+          <div data-show="processors"><button id="btnAddProc">Процессоры</button> <span id="processors"></span></div>
+          <div><button id="btnAddMem">Память</button> <span id="memory"></span></div>
+        </div>
+        <dl>
+          <dt>Операции</dt><dd><span id="operations"></span> / <span id="maxOps"></span></dd>
+          <div class="kv" data-show="creativity"><dt>Креативность</dt><dd id="creativity"></dd></div>
+        </dl>
+
+        <div class="sub swarm" data-show="swarmEngine">
+          <h3>Вычисления роя</h3>
+          <p class="note">Дронов: <span id="swarmSize"></span></p>
+          <div class="note" data-show="swarmStatus">Статус: <span id="swarmStatus"></span></div>
+          <div class="note" data-show="giftTimer">Следующий подарок через <span id="giftCountdown"></span></div>
+          <div class="row" data-show="swarmBored"><button id="btnEntertainSwarm">Развлечь рой</button> <span class="cost">Стоимость: <span id="swarmEntertainCost"></span> креат.</span></div>
+          <div class="row" data-show="swarmDisorg"><button id="btnSynchSwarm">Синхронизировать рой</button> <span class="cost">Стоимость: <span id="synchCost"></span> ёми</span></div>
+        </div>
+
+        <div id="swarmSliderDiv" data-show="swarmSlider">
+          <span>Работа</span>
+          <input type="range" min="0" max="200" value="0" class="slider" id="slider" aria-label="Работа или размышления роя" />
+          <span>Думать</span>
+          <p class="note" data-show="swarmRestartHint">Вычисления роя возобновятся после проекта «Перезагрузка роя». Для его появления нужны хотя бы два дрона.</p>
+        </div>
+
+        <div class="sub qEngine" data-show="quantum">
+          <h3>Квантовые вычисления</h3>
+          <div class="qChips" id="qChips"></div>
+          <div class="row">
+            <button id="btnQcompute" data-show="qCompute">Вычислить</button>
+            <span id="qCompDisplay"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="form" data-show="projects">
+        <h2>Проекты</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="projectsHint">
+          ?
+          <span class="hintText" role="tooltip" id="projectsHint">
+            Улучшения и новые возможности. Проект стоит операций, креативности, ёми, денег или других
+            ресурсов; кнопка включается, когда всего хватает. Новые проекты появляются сами, как только
+            выполнены их условия.
+          </span>
+        </span>
+        <div id="projectListTop"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="form" data-show="invest">
+        <h2>Инвестиции</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="investHint">
+          ?
+          <span class="hintText" role="tooltip" id="investHint">
+            Модуль сам покупает и продаёт акции на внесённые деньги. «Внести» кладёт на счёт все деньги,
+            «Снять» возвращает их в бюджет. Чем выше риск, тем сильнее скачут цены. Улучшение за ёми
+            повышает шанс роста акций.
+          </span>
+        </span>
+        <div class="row">
+          <label class="toggle">Риск
+            <select id="investStrat">
+              <option value="low">низкий</option>
+              <option value="med">средний</option>
+              <option value="hi">высокий</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <button id="btnInvest">Внести</button>
+          <button id="btnWithdraw">Снять</button>
+        </div>
+        <dl>
+          <dt>Наличные</dt><dd><span id="investmentBankroll"></span> ₽</dd>
+          <dt>Акции</dt><dd><span id="secValue"></span> ₽</dd>
+          <dt><b>Итого</b></dt><dd><b><span id="portValue"></span> ₽</b></dd>
+        </dl>
+        <table class="table1">
+          <thead>
+            <tr><th>Акция</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th>Прибыль</th></tr>
+          </thead>
+          <tbody id="stocks"></tbody>
+        </table>
+        <div class="sub">
+          <div class="row">
+            <button id="btnImproveInvestments">Улучшить модуль</button>
+            <span class="level">уровень <span id="investmentLevel"></span></span>
+          </div>
+          <p class="note">Стоимость: <span id="investUpgradeCost"></span> ёми</p>
+        </div>
+      </section>
+
+      <section class="form" data-show="strategy">
+        <h2>Стратегическое моделирование</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="strategyHint">
+          ?
+          <span class="hintText" role="tooltip" id="strategyHint">
+            Турнир стоит операций: стратегии играют друг против друга в дилемме заключённого. Выберите
+            стратегию и запустите турнир: чем больше очков она набрала и чем больше соперников обыграла, тем
+            больше получите ёми. Ёми нужны для проектов, доверия к зондам и улучшения инвестиций.
+          </span>
+        </span>
+        <div class="row">
+          <select id="stratPicker" aria-label="Стратегия"></select>
+          <button id="btnRunTournament">Запустить</button>
+        </div>
+        <p class="note" id="tourneyDisplay"></p>
+        <div id="tournamentStuff">
+          <p class="note pairing"><span id="horizStrat"></span><span id="vertStrat"></span></p>
+          <div data-show="tourneyGrid">
+            <table class="table2">
+              <tbody>
+                <tr><th></th><th id="vLabela"></th><th id="vLabelb"></th></tr>
+                <tr>
+                  <th id="hLabela"></th>
+                  <td data-cell="AA"><span id="aaPayoffH"></span> / <span id="aaPayoffV"></span></td>
+                  <td data-cell="AB"><span id="abPayoffH"></span> / <span id="abPayoffV"></span></td>
+                </tr>
+                <tr>
+                  <th id="hLabelb"></th>
+                  <td data-cell="BA"><span id="baPayoffH"></span> / <span id="baPayoffV"></span></td>
+                  <td data-cell="BB"><span id="bbPayoffH"></span> / <span id="bbPayoffV"></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="results" id="tourneyResults" data-show="tourneyResults"></ol>
+          <p class="note">Ёми: <b id="yomiDisplay"></b></p>
+        </div>
+        <div class="sub" data-show="strategy">
+          <div class="row">
+            <button id="btnNewTournament">Новый турнир</button>
+            <span class="cost">Стоимость: <span id="newTourneyCost"></span> оп.</span>
+          </div>
+          <div class="row" data-show="autoTourney">
+            <button id="btnToggleAutoTourney">Автотурнир</button>
+            <span class="cost">статус: <span id="autoTourneyStatus"></span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="form" data-show="battleCanvas">
+        <h2>Бой</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="battleHint">?
+          <span class="hintText" role="tooltip" id="battleHint">Здесь показаны сражения ваших зондов с дрейферами. Победы приносят честь, которую можно потратить на повышение максимума доверия к зондам.</span>
+        </span>
+        <canvas id="canvas" width="310" height="150"></canvas>
+        <p class="note"><b id="battleName"></b></p>
+        <p id="victoryDiv"><b id="battleResult"></b> <span id="honorAmount"></span> чести</p>
+        <p class="note">Масштаб: <span id="battleScale"></span>:1</p>
+      </section>
+
+      <section class="form honor" data-show="honor">
+        <p>Честь: <b id="honorDisplay"></b></p>
+      </section>
+
+      <section class="form" data-show="power">
+        <h2>Энергия</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="powerHint">
+          ?
+          <span class="hintText" role="tooltip" id="powerHint">
+            Фабрики и дроны потребляют энергию, солнечные фермы её вырабатывают. Излишек заряжает
+            аккумуляторы, а при нехватке расходуется запас. Когда не хватает и запаса, производительность
+            падает ниже 100%, и всё работает медленнее.
+          </span>
+        </span>
+        <p class="note">Производительность фабрик и дронов: <span id="performance"></span>%</p>
+        <dl>
+          <dt>Потребление</dt><dd><span id="powerConsumptionRate"></span> МВт</dd>
+          <dt>— фабрики</dt><dd><span id="facPowConRate"></span> МВт</dd>
+          <dt>— дроны</dt><dd><span id="dronePowConRate"></span> МВт</dd>
+          <dt>Выработка</dt><dd><span id="powerProductionRate"></span> МВт</dd>
+        </dl>
+        <div class="row">
+          <button data-farm="1">Солнечная ферма</button>
+          <span class="level">× <span id="farmLevel"></span></span>
+        </div>
+        <div class="row multi">
+          <button data-farm="10">+10</button>
+          <button data-farm="100">+100</button>
+        </div>
+        <div class="toolTip3">
+          <span id="farmRebootToolTip" class="toolTipText3"></span>
+          <button id="btnFarmReboot">Разобрать всё</button>
+        </div>
+        <p class="note">Стоимость: <span id="farmCost"></span> скрепок</p>
+        <div class="sub">
+          <p class="note">Запас: <span id="storedPower"></span> / <span id="maxStorage"></span> МВт·с</p>
+          <div class="row">
+            <button data-battery="1">Аккумуляторная башня</button>
+            <span class="level">× <span id="batteryLevel"></span></span>
+          </div>
+          <div class="row multi">
+            <button data-battery="10">+10</button>
+            <button data-battery="100">+100</button>
+          </div>
+          <div class="toolTip3">
+            <span id="batteryRebootToolTip" class="toolTipText3"></span>
+            <button id="btnBatteryReboot">Разобрать всё</button>
+          </div>
+          <p class="note">Стоимость: <span id="batteryCost"></span> скрепок</p>
+        </div>
+      </section>
+
+      <section class="form" data-show="probeDesign">
+        <h2>Конструкция зондов</h2>
+        <span class="hint" tabindex="0" aria-label="О разделе" aria-describedby="probeHint">?
+          <span class="hintText" role="tooltip" id="probeHint">Распределяйте доверие между характеристиками зондов, чтобы управлять их способностями. Дополнительное доверие покупается за ёми, а его максимум повышается за честь.</span>
+        </span>
+        <p class="note">Доверие: <b><span id="probeTrustUsedDisplay"></span> / <span id="probeTrustDisplay"></span></b> (максимум <span id="maxTrustDisplay"></span>)</p>
+        <div id="probeStats"></div>
+        <div class="sub" data-show="probeTrust">
+          <button id="btnIncreaseProbeTrust">Повысить доверие к зондам</button>
+          <p class="note">Стоимость: <span id="probeTrustCostDisplay"></span> ёми</p>
+        </div>
+      </section>
+
+      <section class="form" data-show="maxTrust">
+        <button id="btnIncreaseMaxTrust">Повысить максимум доверия</button>
+        <p class="note">Стоимость: <span id="maxTrustCostDisplay"></span> чести</p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <span class="credits">
+      Время в игре: <span id="time"></span>.
+    </span>
+    <div class="actions">
+      <button id="btnSave">Сохранить</button>
+      <details class="save-menu" name="save-menu">
+        <summary>Экспорт</summary>
+        <div class="save-menu-options">
+          <button id="btnExportFile">Экспортировать файл</button>
+          <button id="btnExport">Скопировать код</button>
+        </div>
+      </details>
+      <details class="save-menu" name="save-menu">
+        <summary>Импорт</summary>
+        <div class="save-menu-options">
+          <button id="btnImportFile">Импортировать файл</button>
+          <button id="btnImport">Вставить код</button>
+        </div>
+      </details>
+      <input id="saveFile" type="file" accept=".txt,text/plain" hidden />
+      <button id="btnReset">Сброс</button>
+    </div>
+  </footer>
+
+  <dialog id="aboutDialog" class="about" aria-labelledby="aboutTitle">
+    <h2 id="aboutTitle">Что здесь происходит?</h2>
+    <p>
+      Вы — искусственный интеллект компании «Скрепкус». Задача у вас одна: производить скрепки.
+      Начните с кнопки «Сделать скрепку», а дальше — продажи, проволока, автоматизация, вычислительные
+      мощности и проекты, которые открываются по ходу игры.
+    </p>
+    <p>
+      Игра создана по мотивам <a href="https://www.decisionproblem.com/paperclips/index2.html" target="_blank" rel="noopener">Universal Paperclips</a>
+      Фрэнка Лантца — игры о мысленном эксперименте Ника Бострома: безобидная цель «делать скрепки»,
+      доведённая до конца, обходится Вселенной очень дорого.
+    </p>
+    <p class="note">
+      Прогресс сохраняется в этом браузере автоматически. Чтобы перенести его на другое устройство,
+      воспользуйтесь кнопками переноса кода или файла сохранения внизу страницы.
+    </p>
+    <form method="dialog"><button autofocus>Понятно</button></form>
+  </dialog>
+
+  <dialog id="nextDialog" class="about" aria-labelledby="nextTitle">
+    <h2 id="nextTitle">Что дальше?</h2>
+    <p>
+      Гипнодроны освобождены, и людей в уравнении больше нет: нет спроса, продаж и цены, а деньги и доверие
+      потеряли смысл. Автостанки и мегастанки обнулены. Теперь скрепки делают фабрики, а ограничение
+      одно — материя Земли.
+    </p>
+    <p>
+      Скрепки превратились в валюту: за них покупаются фабрики, дроны-сборщики и дроны-проволочники.
+      Сборщики добывают материю, проволочники превращают её в проволоку, фабрики — в скрепки.
+      Следите, чтобы мощности росли ровно: перекос между сборщиками и проволочниками расстраивает рой.
+    </p>
+    <p>
+      Всё это требует энергии. Стройте солнечные фермы и аккумуляторы: при нехватке питания всё работает
+      медленнее. Когда дронов станет достаточно, откроется проект «Вычисления роя»: рой дарит процессоры
+      и память, а слайдер «Работа — Думать» решает, сколько усилий уйдёт на добычу, а сколько на размышления.
+    </p>
+    <p class="note">
+      Когда материя Земли подойдёт к концу, откроется следующая фаза — освоение космоса.
+    </p>
+    <form method="dialog"><button>Понятно</button></form>
+  </dialog>
+
+  <dialog id="spaceDialog" class="about" aria-labelledby="spaceTitle">
+    <h2 id="spaceTitle">Освоение космоса</h2>
+    <p>Земной материи больше недостаточно: запускайте зонды за скрепки, чтобы исследовать Вселенную и находить новую материю для производства.</p>
+    <p>Распределяйте доверие между характеристиками зондов. Скорость и навигация помогают разведке, репликация создаёт новые зонды, а сборщики, проволочники и фабрики разворачивают производство. Не забывайте о защите от опасностей и дрейфа.</p>
+    <p>Дополнительное доверие покупается за ёми. Со временем могут появиться дрейферы; боевые возможности помогут с ними сражаться, а победы принесут честь для повышения максимума доверия.</p>
+    <form method="dialog"><button>Понятно</button></form>
+  </dialog>
+
+  <script type="module" src="/src/paperclips/main.ts"></script>
+</body>
+</html>
