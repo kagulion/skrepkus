@@ -27,6 +27,7 @@ def text(draw, xy, value, size, fill=INK):
     latin, _ = load_font("latin", size)
     cyrillic, chars = load_font("cyrillic", size)
     x, y = xy
+    x -= sum((cyrillic if ord(char) in chars else latin).getlength(char) for char in value) / 2
     for char in value:
         font = cyrillic if ord(char) in chars else latin
         draw.text((x, y + size), char, font=font, fill=fill, anchor="ls")
@@ -47,10 +48,9 @@ def main():
         image = Image.new("RGB", (1200, 630), PAPER)
         draw = ImageDraw.Draw(image)
         draw.rectangle((24, 24, 1175, 605), outline=RULE, width=2)
-        text(draw, (64, 120), title, 88)
+        text(draw, (600, 155), title, 88)
         for row, line in enumerate(description):
-            text(draw, (64, 290 + row * 46), line, 32)
-        draw.line((64, 514, 1136, 514), fill=RULE, width=2)
+            text(draw, (600, 325 + row * 46), line, 32)
         image.save(OUT / f"{slug}.png", optimize=True)
 
 
